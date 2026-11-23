@@ -36,6 +36,7 @@ const Suppliers = () => {
   // Supplier payment recording
   const [payingSupplier, setPayingSupplier] = useState(null);
   const [payAmount, setPayAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Bank Transfer / Cheque");
 
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter((s) => {
@@ -57,10 +58,11 @@ const Suppliers = () => {
   const totalPayableBalance = suppliers.reduce((acc, s) => acc + (s.balance || 0), 0);
   const activeSuppliers = suppliers.filter((s) => s.status === "Active").length;
 
-  const handlePaymentSubmit = (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     if (!payingSupplier || !payAmount) return;
-    recordSupplierPayment(payingSupplier.id, payAmount);
+    const saved = await recordSupplierPayment(payingSupplier.id, payAmount, paymentMethod);
+    if (!saved) return;
     setPayingSupplier(null);
     setPayAmount("");
   };
@@ -310,7 +312,11 @@ const Suppliers = () => {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Payment Mode / Bank Account
                 </label>
-                <select className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none">
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                >
                   <option>Bank Transfer / Cheque</option>
                   <option>Fonepay / Corporate QR</option>
                   <option>Cash Receipt</option>
@@ -341,12 +347,11 @@ const Suppliers = () => {
       <SupplierModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={(data) => {
+        onSave={async (data) => {
           if (supplierToEdit) {
-            updateSupplier(supplierToEdit.id, data);
-          } else {
-            addSupplier(data);
+            return updateSupplier(supplierToEdit.id, data);
           }
+          return addSupplier(data);
         }}
         supplierToEdit={supplierToEdit}
       />

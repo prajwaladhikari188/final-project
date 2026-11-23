@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Wrench, Save, Plus } from "lucide-react";
-import { CATEGORIES } from "../data/demoData";
+import { CATEGORIES } from "../data/appDefaults";
 
 const ProductModal = ({ isOpen, onClose, onSave, productToEdit = null }) => {
   const initialForm = {
@@ -20,6 +20,8 @@ const ProductModal = ({ isOpen, onClose, onSave, productToEdit = null }) => {
 
   const [formData, setFormData] = useState(initialForm);
   const [errors, setErrors] = useState({});
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (productToEdit) {
@@ -32,6 +34,7 @@ const ProductModal = ({ isOpen, onClose, onSave, productToEdit = null }) => {
       });
     }
     setErrors({});
+    setSaveError("");
   }, [productToEdit, isOpen]);
 
   if (!isOpen) return null;
@@ -50,11 +53,23 @@ const ProductModal = ({ isOpen, onClose, onSave, productToEdit = null }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    onSave(formData);
-    onClose();
+    setSaving(true);
+    setSaveError("");
+    try {
+      const saved = await onSave(formData);
+      if (saved === false) {
+        setSaveError("The product was not saved. Review the error notification and try again.");
+        return;
+      }
+      onClose();
+    } catch (error) {
+      setSaveError(error.message || "The product could not be saved.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const categoriesList = CATEGORIES.filter((c) => c !== "All Categories");
@@ -89,6 +104,7 @@ const ProductModal = ({ isOpen, onClose, onSave, productToEdit = null }) => {
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto text-xs sm:text-sm">
+          {saveError && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">{saveError}</p>}
           {/* Row 1: Name & Code */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
@@ -284,17 +300,19 @@ const ProductModal = ({ isOpen, onClose, onSave, productToEdit = null }) => {
           <div className="pt-4 border-t border-slate-200 flex justify-end gap-2.5">
             <button
               type="button"
+              disabled={saving}
               onClick={onClose}
-              className="px-4 py-2 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 transition"
+              className="px-4 py-2 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 transition flex items-center gap-1.5"
+              disabled={saving}
+              className="px-6 py-2 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 transition flex items-center gap-1.5 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              <span>{productToEdit ? "Update Product" : "Save Part to Inventory"}</span>
+              <span>{saving ? "Saving…" : productToEdit ? "Update Product" : "Save Part to Inventory"}</span>
             </button>
           </div>
         </form>

@@ -11,15 +11,21 @@ import Suppliers from "./pages/Suppliers";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
-import CustomerPortal from "./pages/CustomerPortal";
+import CustomerDashboard from "./pages/CustomerDashboard";
 
 const MainLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { currentUser } = useApp();
+  const { currentUser, authLoading, products, persistenceStatus, persistenceError } = useApp();
+  const sampleProductCount = products.filter((product) => product.isSample).length;
 
   // If on login page, don't show navbar and sidebar
-  if (location.pathname === "/login") {
+  if (
+    location.pathname === "/login" ||
+    authLoading ||
+    !currentUser ||
+    currentUser.role === "customer"
+  ) {
     return children;
   }
 
@@ -32,6 +38,27 @@ const MainLayout = ({ children }) => {
       <div className="flex-1 flex flex-col min-w-0 lg:pl-64 transition-all duration-300">
         <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
         <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
+          <div
+            className={`mb-5 rounded-xl border px-4 py-3 text-xs font-medium ${
+              persistenceStatus === "error"
+                ? "border-red-300 bg-red-50 text-red-900"
+                : "border-emerald-300 bg-emerald-50 text-emerald-900"
+            }`}
+            role={persistenceStatus === "error" ? "alert" : "status"}
+          >
+            {persistenceStatus === "loading"
+              ? "Loading operational records from MariaDB…"
+              : persistenceStatus === "saving"
+              ? "Saving operational changes to MariaDB…"
+              : persistenceStatus === "error"
+              ? `Business data could not be synchronized with MariaDB: ${persistenceError}`
+              : "Operational records are loaded from and saved to MariaDB. Changes persist across refreshes and sign-outs."}
+            {sampleProductCount > 0 && (
+              <span className="mt-1 block text-amber-900">
+                Showing {sampleProductCount} sample products. Images, prices, and stock are illustrative; replace them with verified data before business use.
+              </span>
+            )}
+          </div>
           {children}
         </main>
       </div>
@@ -40,35 +67,61 @@ const MainLayout = ({ children }) => {
 };
 
 // Protected route checking for active user
-const RouteWrapper = ({ children, requireAdmin = false }) => {
-  const { currentUser } = useApp();
+const RouteWrapper = ({ children, requiredRole }) => {
+  const { currentUser, authLoading } = useApp();
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-slate-300">
+        Checking staff session…
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 
-  // If page requires admin and current user is a customer, route them to CustomerPortal
-  if (requireAdmin && currentUser.role === "customer") {
-    return <Navigate to="/portal" replace />;
+  if (currentUser.role !== requiredRole) {
+    return <Navigate to={currentUser.role === "customer" ? "/customer" : "/"} replace />;
   }
 
   return children;
 };
 
+const LoginRoute = () => {
+  const { currentUser, authLoading } = useApp();
+  if (authLoading) {
+    return <div className="flex min-h-screen items-center justify-center">Checking your session…</div>;
+  }
+  if (currentUser) {
+    return <Navigate to={currentUser.role === "customer" ? "/customer" : "/"} replace />;
+  }
+  return <Login />;
+};
+
+const RoleRedirect = () => {
+  const { currentUser, authLoading } = useApp();
+  if (authLoading) {
+    return <div className="flex min-h-screen items-center justify-center">Checking your session…</div>;
+  }
+  return <Navigate to={currentUser ? (currentUser.role === "customer" ? "/customer" : "/") : "/login"} replace />;
+};
+
 function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <MainLayout>
           <Routes>
             {/* Auth / Login */}
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<LoginRoute />} />
 
             {/* Admin Management Routes */}
             <Route
               path="/"
               element={
-                <RouteWrapper requireAdmin={true}>
+                <RouteWrapper requiredRole="admin">
                   <Dashboard />
                 </RouteWrapper>
               }
@@ -76,7 +129,7 @@ function App() {
             <Route
               path="/inventory"
               element={
-                <RouteWrapper requireAdmin={true}>
+                <RouteWrapper requiredRole="admin">
                   <Inventory />
                 </RouteWrapper>
               }
@@ -84,7 +137,7 @@ function App() {
             <Route
               path="/billing"
               element={
-                <RouteWrapper requireAdmin={true}>
+                <RouteWrapper requiredRole="admin">
                   <Billing />
                 </RouteWrapper>
               }
@@ -92,7 +145,7 @@ function App() {
             <Route
               path="/customers"
               element={
-                <RouteWrapper requireAdmin={true}>
+                <RouteWrapper requiredRole="admin">
                   <Customers />
                 </RouteWrapper>
               }
@@ -100,7 +153,7 @@ function App() {
             <Route
               path="/suppliers"
               element={
-                <RouteWrapper requireAdmin={true}>
+                <RouteWrapper requiredRole="admin">
                   <Suppliers />
                 </RouteWrapper>
               }
@@ -108,7 +161,7 @@ function App() {
             <Route
               path="/reports"
               element={
-                <RouteWrapper requireAdmin={true}>
+                <RouteWrapper requiredRole="admin">
                   <Reports />
                 </RouteWrapper>
               }
@@ -116,40 +169,23 @@ function App() {
             <Route
               path="/settings"
               element={
-                <RouteWrapper requireAdmin={true}>
+                <RouteWrapper requiredRole="admin">
                   <Settings />
                 </RouteWrapper>
               }
             />
 
-            {/* Customer Portal Routes */}
             <Route
-              path="/portal"
+              path="/customer"
               element={
-                <RouteWrapper>
-                  <CustomerPortal />
-                </RouteWrapper>
-              }
-            />
-            <Route
-              path="/portal/orders"
-              element={
-                <RouteWrapper>
-                  <CustomerPortal />
-                </RouteWrapper>
-              }
-            />
-            <Route
-              path="/portal/account"
-              element={
-                <RouteWrapper>
-                  <CustomerPortal />
+                <RouteWrapper requiredRole="customer">
+                  <CustomerDashboard />
                 </RouteWrapper>
               }
             />
 
             {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<RoleRedirect />} />
           </Routes>
         </MainLayout>
       </BrowserRouter>

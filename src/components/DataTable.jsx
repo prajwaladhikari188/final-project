@@ -16,7 +16,8 @@ const DataTable = ({
   const filteredData = data.filter((item) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
-    return Object.values(item).some((val) => {
+    return Object.entries(item).some(([key, val]) => {
+      if (key === "image" || key === "imageAlt") return false;
       if (val === null || val === undefined) return false;
       if (typeof val === "object") return false;
       return String(val).toLowerCase().includes(term);

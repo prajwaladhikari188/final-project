@@ -18,9 +18,10 @@ import {
   Bike
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
-import { CATEGORIES, POPULAR_BIKE_MODELS } from "../data/demoData";
+import { CATEGORIES, POPULAR_BIKE_MODELS } from "../data/appDefaults";
 import DataTable from "../components/DataTable";
 import ProductModal from "../components/ProductModal";
+import { downloadCsv } from "../utils/csv";
 
 const Inventory = () => {
   const { products, addProduct, updateProduct, deleteProduct, settings } = useApp();
@@ -130,28 +131,19 @@ const Inventory = () => {
     ];
 
     const rows = filteredProducts.map((p) => [
-      `"${p.code}"`,
-      `"${p.name.replace(/"/g, '""')}"`,
-      `"${p.category}"`,
-      `"${p.brand || ""}"`,
-      `"${p.bikeModel || ""}"`,
+      p.code,
+      p.name,
+      p.category,
+      p.brand || "",
+      p.bikeModel || "",
       p.purchasePrice,
       p.sellingPrice,
       p.stock,
-      `"${p.rackLocation || ""}"`,
-      `"${p.warranty || ""}"`
+      p.rackLocation || "",
+      p.warranty || ""
     ]);
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `mama_auto_parts_inventory_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(`mama_auto_parts_inventory_${Date.now()}.csv`, headers, rows);
   };
 
   // Table Columns Definition
@@ -163,7 +155,16 @@ const Inventory = () => {
       render: (row) => (
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+          {row.image ? (
+            <img
+              src={row.image}
+              alt={row.imageAlt || row.name}
+              loading="lazy"
+              className="h-full w-full rounded-xl object-contain"
+            />
+          ) : (
             <Wrench className="w-5 h-5" />
+          )}
           </div>
           <div>
             <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">
@@ -496,12 +497,11 @@ const Inventory = () => {
       <ProductModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={(data) => {
+        onSave={async (data) => {
           if (productToEdit) {
-            updateProduct(productToEdit.id, data);
-          } else {
-            addProduct(data);
+            return updateProduct(productToEdit.id, data);
           }
+          return addProduct(data);
         }}
         productToEdit={productToEdit}
       />

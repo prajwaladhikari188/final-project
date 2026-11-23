@@ -3,16 +3,8 @@ import {
   Settings as SettingsIcon,
   Store,
   Receipt,
-  ShieldCheck,
   Save,
-  RotateCcw,
-  Download,
-  Upload,
-  User,
-  CheckCircle,
-  AlertTriangle,
-  Lock,
-  Bike
+  Download
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 
@@ -20,8 +12,6 @@ const Settings = () => {
   const {
     settings,
     updateSettings,
-    resetDemoData,
-    currentUser,
     products,
     customers,
     suppliers,
@@ -30,7 +20,7 @@ const Settings = () => {
   } = useApp();
 
   const [formData, setFormData] = useState(settings);
-  const [activeTab, setActiveTab] = useState("business"); // "business", "tax", "profile", "backup"
+  const [activeTab, setActiveTab] = useState("business");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -40,17 +30,17 @@ const Settings = () => {
     }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    updateSettings(formData);
+    const saved = await updateSettings(formData);
+    if (saved) setFormData(saved);
   };
 
-  // Export Complete Backup JSON
-  const handleExportBackup = () => {
+  const handleExportData = () => {
     const backupData = {
       version: "1.0.0",
       timestamp: new Date().toISOString(),
-      settings: formData,
+      settings,
       products,
       customers,
       suppliers,
@@ -69,18 +59,7 @@ const Settings = () => {
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
-    showToast("System database backup successfully downloaded as JSON!");
-  };
-
-  const handleResetData = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to restore all realistic demo motorcycle parts, customers, suppliers, and transactions? Any custom changes will be reset."
-      )
-    ) {
-      resetDemoData();
-      setFormData(settings);
-    }
+    showToast("Operational data export downloaded as JSON.");
   };
 
   return (
@@ -97,7 +76,7 @@ const Settings = () => {
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Customize shop identity, Nepal PAN/VAT parameters, bill terms, and manage LocalStorage database.
+            Customize shop identity, PAN/VAT parameters, and invoice terms saved in MariaDB.
           </p>
         </div>
 
@@ -142,8 +121,8 @@ const Settings = () => {
               : "text-slate-600 hover:text-slate-900"
           }`}
         >
-          <RotateCcw className="w-4 h-4" />
-          <span>Database & Reset</span>
+          <Download className="w-4 h-4" />
+          <span>Data Export</span>
         </button>
       </div>
 
@@ -380,15 +359,15 @@ const Settings = () => {
         </form>
       )}
 
-      {/* Tab 3: Database & Reset */}
+      {/* Tab 3: Export persisted business data */}
       {activeTab === "backup" && (
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <h2 className="text-base font-bold text-slate-900">
-              LocalStorage Database Management
+              Export business data
             </h2>
             <p className="text-xs text-slate-500">
-              Export data for offline backup or restore realistic motorcycle shop initial demo data
+              This downloads the records currently loaded from MariaDB. Keep separate database backups for disaster recovery.
             </p>
           </div>
 
@@ -399,39 +378,18 @@ const Settings = () => {
                 <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center mb-3 shadow-md shadow-blue-500/20">
                   <Download className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm">Download Full Backup</h3>
+                <h3 className="font-bold text-slate-900 text-sm">Download operational data</h3>
                 <p className="text-xs text-slate-600 mt-1">
-                  Exports all {products.length} spare parts, {customers.length} customers, {suppliers.length} suppliers, and {transactions.length} POS sales invoices as a JSON snapshot.
+                  Exports the loaded products, customers, suppliers, invoices, and settings. This JSON export is not a substitute for a database backup.
                 </p>
               </div>
 
               <button
-                onClick={handleExportBackup}
+                onClick={handleExportData}
                 className="mt-4 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
-                <span>Export System Data (.JSON)</span>
-              </button>
-            </div>
-
-            {/* Reset Factory Demo Data */}
-            <div className="p-5 rounded-2xl bg-red-50/60 border border-red-200 flex flex-col justify-between">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center mb-3 shadow-md shadow-red-500/20">
-                  <RotateCcw className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-slate-900 text-sm">Reset to Realistic Demo Data</h3>
-                <p className="text-xs text-slate-600 mt-1">
-                  Restores 26+ authentic Nepalese motorcycle spare parts (Endurance, Motul, Rolon, Brembo, NGK, CEAT), sample customers with vehicle number plates, and distributor accounts.
-                </p>
-              </div>
-
-              <button
-                onClick={handleResetData}
-                className="mt-4 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition flex items-center justify-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Reset to Sample State</span>
+                <span>Export data (.JSON)</span>
               </button>
             </div>
           </div>

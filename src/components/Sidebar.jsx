@@ -11,11 +11,10 @@ import {
   Wrench,
   AlertTriangle,
   LogOut,
-  UserCheck,
   Bike,
   ShieldCheck,
-  ChevronRight,
-  X
+  X,
+  User
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 
@@ -46,16 +45,10 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: "Settings", path: "/settings", icon: Settings }
   ];
 
-  const customerNavItems = [
-    { name: "Spare Parts Catalog", path: "/portal", icon: Boxes },
-    { name: "My Purchases & Bills", path: "/portal/orders", icon: ShoppingCart },
-    { name: "My Account & Dues", path: "/portal/account", icon: UserCheck }
-  ];
-
-  const navItems = isAdmin ? adminNavItems : customerNavItems;
+  const navItems = adminNavItems;
 
   const handleLogout = () => {
-    logout();
+    void logout();
     navigate("/login");
   };
 
@@ -109,16 +102,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                 }`}
               />
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                {isAdmin ? "Admin Panel" : "Customer Portal"}
+                Admin Panel
               </span>
             </div>
-            <button
-              onClick={() => navigate("/login")}
-              className="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-0.5"
-              title="Switch user role"
-            >
-              Switch <ChevronRight className="w-3 h-3" />
-            </button>
           </div>
         </div>
 
@@ -183,17 +169,12 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="p-4 border-t border-slate-800 bg-slate-950/40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              <img
-                src={
-                  currentUser?.avatar ||
-                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-                }
-                alt="Profile"
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-500/40"
-              />
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white ring-2 ring-blue-500/40">
+                <User className="h-4 w-4" aria-hidden="true" />
+              </div>
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-white truncate">
-                  {currentUser?.name || "Guest User"}
+                  {currentUser?.name || currentUser?.email || "Signed-in staff"}
                 </p>
                 <p className="text-[10px] text-slate-400 truncate">
                   {currentUser?.email || "Signed in"}

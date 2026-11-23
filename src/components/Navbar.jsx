@@ -173,14 +173,9 @@ const Navbar = ({ onOpenSidebar, onOpenAddProduct }) => {
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100 transition"
           >
-            <img
-              src={
-                currentUser?.avatar ||
-                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-              }
-              alt="Avatar"
-              className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500/20"
-            />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700 ring-2 ring-blue-500/20">
+              <User className="h-4 w-4" aria-hidden="true" />
+            </div>
             <div className="hidden lg:block text-left">
               <p className="text-xs font-bold text-slate-800 leading-tight">
                 {currentUser?.name || "Admin"}
@@ -226,7 +221,7 @@ const Navbar = ({ onOpenSidebar, onOpenAddProduct }) => {
                 <button
                   onClick={() => {
                     setShowProfileMenu(false);
-                    logout();
+                    void logout();
                     navigate("/login");
                   }}
                   className="w-full px-4 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 font-semibold"

@@ -19,7 +19,7 @@ import {
   Receipt
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
-import { CATEGORIES } from "../data/demoData";
+import { CATEGORIES } from "../data/appDefaults";
 import InvoiceModal from "../components/InvoiceModal";
 import CustomerModal from "../components/CustomerModal";
 
@@ -45,6 +45,7 @@ const Billing = () => {
   // Modals
   const [completedInvoice, setCompletedInvoice] = useState(null);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [isCompletingSale, setIsCompletingSale] = useState(false);
 
   // Selected customer object
   const activeCustomer = useMemo(() => {
@@ -158,7 +159,7 @@ const Billing = () => {
   const grandTotal = taxableAmount + vatAmount;
 
   // Complete and Print Sale
-  const handleCompleteSale = () => {
+  const handleCompleteSale = async () => {
     if (cart.length === 0) {
       alert("Cart is empty! Add at least one spare part to bill.");
       return;
@@ -195,7 +196,10 @@ const Billing = () => {
       notes: saleNotes.trim()
     };
 
-    const newInvoice = completeSale(salePayload);
+    setIsCompletingSale(true);
+    const newInvoice = await completeSale(salePayload);
+    setIsCompletingSale(false);
+    if (!newInvoice) return;
 
     // Reset register fields
     setCart([]);
@@ -298,6 +302,18 @@ const Billing = () => {
                     onClick={() => !isOutOfStock && handleAddToCart(p)}
                   >
                     <div>
+                      <div className="mb-3 flex h-28 items-center justify-center overflow-hidden rounded-xl bg-slate-50">
+                        {p.image ? (
+                          <img
+                            src={p.image}
+                            alt={p.imageAlt || p.name}
+                            loading="lazy"
+                            className="h-full w-full object-contain p-2"
+                          />
+                        ) : (
+                          <Bike className="h-10 w-10 text-slate-300" />
+                        )}
+                      </div>
                       <div className="flex items-start justify-between gap-2">
                         <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
                           {p.code}
@@ -566,12 +582,12 @@ const Billing = () => {
             {/* Checkout & Print Button */}
             <button
               type="button"
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || isCompletingSale}
               onClick={handleCompleteSale}
               className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center gap-2 transform active:scale-98"
             >
               <Printer className="w-4 h-4" />
-              <span>Complete Sale & Print Invoice</span>
+              <span>{isCompletingSale ? "Saving Sale…" : "Complete Sale & Print Invoice"}</span>
             </button>
           </div>
         </div>
@@ -589,9 +605,11 @@ const Billing = () => {
       <CustomerModal
         isOpen={isCustomerModalOpen}
         onClose={() => setIsCustomerModalOpen(false)}
-        onSave={(data) => {
-          const newCust = addCustomer(data);
+        onSave={async (data) => {
+          const newCust = await addCustomer(data);
+          if (!newCust) return false;
           setSelectedCustomerId(newCust.id);
+          return newCust;
         }}
       />
     </div>

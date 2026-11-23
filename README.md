@@ -1,182 +1,150 @@
-# 🏍️ MAMA AUTO PARTS – Motorcycle Spare Parts & POS Management System 
+# MAMA AUTO PARTS
 
-> **A modern, full-featured Inventory, Point of Sale (POS) Billing, Customer Credit Ledger, and Financial Analytics Platform engineered specifically for Nepalese motorcycle workshops and spare parts businesses.**
+React 19/Vite admin and customer interface with an Express API. The API uses MariaDB/MySQL, bcrypt password hashes, and opaque server-side sessions stored in the database.
 
----
+## Operational data and sample catalog
 
-## 🌟 Executive Summary
+Authenticated administrators load and save products, customers, suppliers, sales/invoices, payments (including payment method), and store settings through the MariaDB-backed API. Sales update inventory and customer balances in a database transaction. The app removes legacy `mama_*` localStorage keys and does not store operational records in browser storage. Settings can export the currently loaded records as JSON; that export is not a database backup.
 
-**MAMA AUTO PARTS** is a complete enterprise-grade web application built with **React 19**, **Vite**, and **Tailwind CSS**. It solves the day-to-day operational challenges of motorcycle parts retailers and repair centers in Nepal—including rapid counter billing with **13% Nepal VAT**, **Fonepay QR** and credit payments, real-time stock and reorder tracking across warehouse rack locations, customer motorcycle vehicle plate logs, and comprehensive supplier accounts payable.
+The additive migrations preserve the six existing inventory rows and do not infer ownership for historical invoices. In local demo mode, the 500 illustrative catalog products remain marked as samples and are kept separate from real production inventory. Their images, prices, and stock are examples only and must be replaced with verified business data.
 
----
+## Requirements
 
-## 🚀 Key Features & System Modules
+- Node.js 20.19+ or 22.12+ (required by the installed Vite release)
+- XAMPP MariaDB/MySQL or another compatible MySQL server
+- Apache with `mod_rewrite`, `mod_headers`, and (for deployment) `mod_proxy`/`mod_proxy_http`
 
-### 1. ⚡ POS Billing & Cashier Register
-* **Fast Item Search & Add**: Instant search across 26+ spare parts by name, SKU, manufacturer brand, and compatible bike models.
-* **Smart Nepali Tax Compliance**:
-  * Configurable **13% Nepal VAT** computation.
-  * Instant discount calculations (flat rupee discounts).
-  * Multiple payment options: **Fonepay QR**, **Cash at Counter**, **eSewa / Khalti**, **Bank Card POS**, and **Store Credit / Due**.
-* **Printable Tax Invoices (A4 & POS Receipt)**:
-  * Full-featured invoice modal with clean `@media print` CSS.
-  * QR verification block, shop PAN number, cashier attribution, itemized breakdown, and store warranty disclaimer.
+## Local development
 
-### 2. 📦 Motorcycle Spare Parts Inventory Management
-* **Comprehensive Spare Parts Tracking**:
-  * Fields: SKU Code (`MP-BRK-001`), Brand (`Motul`, `Brembo`, `Rolon`, `Endurance`, `NGK`, `CEAT`), Compatible Bike Models (`Pulsar 220F`, `FZ-S`, `Duke 390`, `Classic 350`, `Apache 160 4V`), Cost Price, Selling Price, and Rack Location (`Rack A-1`).
-* **Low Stock & Reorder Alerts**: Real-time visual flags when items drop below configurable thresholds.
-* **Quick Stock Increment/Decrement**: Single-click `+` / `-` stock level adjustments directly from the table.
-* **Data Export**: 1-click **CSV export** for auditing, physical stock count, and restocking orders.
+1. Install packages and prepare configuration:
 
-### 3. 👥 Customer Directory & Credit Ledger
-* **Motorcycle Plate & Model Association**: Maintain vehicle registration numbers (e.g., `Ba 2 Pa 7845`) alongside customer profiles.
-* **Store Due & Credit Tracking**:
-  * Automatic recording of purchases on credit.
-  * Receive partial or full payments with receipt logs.
-  * Filter view to instantly highlight all customers with pending balances.
-* **Customer Purchase History Drawer**: Slide-out drawer showcasing all past invoices and service records for any client.
-
-### 4. 🚚 Suppliers & Wholesalers Directory
-* **Distributor Profiles**: Wholesaler PAN records, contact persons, contact phone numbers, warehouse addresses, and supplied part categories.
-* **Accounts Payable**: Track outstanding dues owed to distributors with integrated payment recording.
-
-### 5. 📊 Sales & Financial Analytics
-* **Interactive Data Visualizations (Recharts)**:
-  * **Weekly Revenue vs. Cost of Goods Sold (COGS) vs. Gross Profit**: Area charts and bar charts tracking margins.
-  * **Sales Distribution by Payment Method**: Donut charts detailing digital (Fonepay) vs cash vs credit sales.
-  * **Top 5 Best-Selling Spare Parts**: Highlighting high-turnover motorcycle components.
-* **Audit-Ready POS Sales Ledger**: Complete searchable invoice log with date filtering (Today, This Week, This Month, All Time) and CSV download.
-
-### 6. 🔐 Customer Account Portal
-* **Dedicated Rider Experience**: Customers can log in to view:
-  * Genuine parts catalog with live stock status at the Teku shop.
-  * Inquiries and reservation requests.
-  * Historical tax invoices with re-print capabilities.
-  * Outstanding store credit balance and payment advice.
-
-### 7. ⚙️ Store Settings & LocalStorage Database
-* **Store Branding & Tax Setup**: Configure shop trade name, PAN/VAT number, tagline, phone numbers, and invoice footer greetings.
-* **Zero-Backend Persistence**: All state synchronizes automatically with browser `localStorage`.
-* **Complete System Backup & Restore**:
-  * **Download JSON Backup**: Full snapshot of products, customers, suppliers, transactions, and settings.
-  * **Restore Realistic Demo Data**: Instantly reset the database to 26+ authentic Nepali motorcycle parts, customers, and distributors.
-
----
-
-## 🛠️ Technology Stack
-
-| Layer | Technology |
-|---|---|
-| **Frontend Framework** | [React 19](https://react.dev/) |
-| **Build Tool & Dev Server** | [Vite 6 / 8](https://vitejs.dev/) |
-| **Routing** | [React Router DOM v7](https://reactrouter.com/) |
-| **Styling & Design System** | [Tailwind CSS](https://tailwindcss.com/) with Inter & Outfit typography |
-| **Icons** | [Lucide React](https://lucide.dev/) |
-| **Data Visualizations & Charts** | [Recharts](https://recharts.org/) |
-| **State & Storage** | React Context API (`useApp`) + HTML5 `localStorage` |
-
----
-
-## 📂 Project Structure
-
-```
-final project/
-├── index.html                   # HTML template with Google Fonts & Tailwind CDN
-├── package.json                 # Project dependencies & npm scripts
-├── vite.config.js               # Vite configuration with React plugin
-├── src/
-│   ├── main.jsx                 # Application entry point
-│   ├── index.css                # Global styles, print styling, scrollbar
-│   ├── App.jsx                  # Main router & layout configuration
-│   ├── context/
-│   │   └── AppContext.jsx       # Global application state, CRUD, & LocalStorage sync
-│   ├── data/
-│   │   └── demoData.js          # Realistic preloaded Nepalese motorcycle parts & records
-│   ├── components/
-│   │   ├── Navbar.jsx           # Top header bar with quick search & stock notifications
-│   │   ├── Sidebar.jsx          # Responsive collapsible navigation
-│   │   ├── StatCard.jsx         # KPI metric card component
-│   │   ├── DataTable.jsx        # Reusable paginated search & sort data table
-│   │   ├── InvoiceModal.jsx     # Printable tax invoice modal (A4 / POS format)
-│   │   ├── ProductModal.jsx     # Add / Edit spare part modal
-│   │   ├── CustomerModal.jsx    # Register / Update customer modal
-│   │   └── SupplierModal.jsx    # Add / Edit distributor modal
-│   └── pages/
-│       ├── Dashboard.jsx        # High-level overview, charts, low stock alerts
-│       ├── Inventory.jsx        # Spare parts catalog, filters, quick +/- adjustments
-│       ├── Billing.jsx          # POS register, cart calculation, checkout
-│       ├── Customers.jsx        # Customer ledger, dues, vehicle plates, history drawer
-│       ├── Suppliers.jsx        # Wholesaler directory & payable settlements
-│       ├── Reports.jsx          # Financial analytics, COGS, profit, CSV export
-│       ├── Settings.jsx         # Store config, PAN/VAT, JSON backup & reset
-│       ├── CustomerPortal.jsx   # Dedicated rider self-service portal
-│       └── Login.jsx            # Multi-role authentication & 1-click demo access
-└── README.md
-```
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-* [Node.js](https://nodejs.org/) (version 18.0.0 or higher)
-* `npm` or `pnpm`
-
-### Installation & Execution
-
-1. **Clone or navigate to the project directory:**
-   ```bash
-   cd "final project"
-   ```
-
-2. **Install dependencies:**
-   ```bash
+   ```powershell
    npm install
+   Copy-Item .env.example .env
    ```
 
-3. **Start the local development server:**
-   ```bash
+2. The existing XAMPP schema is `mama_auto_parts_db`; it contains the operational tables and `users` table. Do not create a replacement database or run these changes against `mama_auto_partsbike_db`. Create separate API/provisioning accounts in phpMyAdmin or the MariaDB console, using strong, unique passwords:
+
+   ```sql
+   CREATE USER 'mama_app'@'localhost' IDENTIFIED BY 'REPLACE_WITH_STRONG_APP_PASSWORD';
+   CREATE USER 'mama_setup'@'localhost' IDENTIFIED BY 'REPLACE_WITH_STRONG_SETUP_PASSWORD';
+   GRANT REFERENCES ON mama_auto_parts_db.* TO 'mama_setup'@'localhost';
+   GRANT CREATE, ALTER, INDEX ON mama_auto_parts_db.* TO 'mama_setup'@'localhost';
+   ```
+
+   Set `DB_USER`, `DB_PASSWORD`, `DB_ADMIN_USER`, and `DB_ADMIN_PASSWORD` in `.env` to match those accounts. `DB_HOST=localhost`, `DB_PORT=3306`, and `DB_NAME=mama_auto_parts_db` match the XAMPP setup. Do not use the MariaDB root account for the API.
+
+3. Generate a fresh session key and set the exact allowed frontend origins in `.env`:
+
+   ```powershell
+   node -e "console.log(require('node:crypto').randomBytes(48).toString('base64'))"
+   ```
+
+   Put the output in `SESSION_SECRET`. Keep `NODE_ENV=development`, `COOKIE_SECURE=false`, `API_HOST=127.0.0.1`, and `TRUST_PROXY=true` for the one-hop local Apache/Vite proxy. Use the local `FRONTEND_ORIGINS` list from `.env.example` for localhost/127.0.0.1 Apache and Vite (`5173`/`5174`); add only the exact origin you use if its host, scheme, or port differs. Origins are comma-separated and must not include paths. Never commit `.env`.
+
+4. Apply the idempotent authentication and business-data migrations:
+
+   ```powershell
+   npm run db:migrate
+   ```
+
+   Migrations add product metadata, business customers/suppliers, payment ledgers, store settings, and invoice snapshots while preserving existing rows. Grant least-privilege access to the API and provisioning accounts:
+
+   ```sql
+   GRANT SELECT ON mama_auto_parts_db.users TO 'mama_app'@'localhost';
+   GRANT SELECT, INSERT, DELETE ON mama_auto_parts_db.auth_sessions TO 'mama_app'@'localhost';
+   GRANT SELECT, INSERT ON mama_auto_parts_db.invoices TO 'mama_app'@'localhost';
+   GRANT SELECT, INSERT ON mama_auto_parts_db.invoice_items TO 'mama_app'@'localhost';
+   GRANT SELECT, INSERT, UPDATE ON mama_auto_parts_db.inventory_items TO 'mama_app'@'localhost';
+   GRANT SELECT, INSERT, UPDATE ON mama_auto_parts_db.business_customers TO 'mama_app'@'localhost';
+   GRANT SELECT, INSERT, UPDATE ON mama_auto_parts_db.business_suppliers TO 'mama_app'@'localhost';
+   GRANT INSERT ON mama_auto_parts_db.stock_ledger TO 'mama_app'@'localhost';
+   GRANT INSERT ON mama_auto_parts_db.customer_payments TO 'mama_app'@'localhost';
+   GRANT INSERT ON mama_auto_parts_db.supplier_payments TO 'mama_app'@'localhost';
+   GRANT SELECT, INSERT, UPDATE ON mama_auto_parts_db.store_settings TO 'mama_app'@'localhost';
+   GRANT SELECT, INSERT, UPDATE ON mama_auto_parts_db.users TO 'mama_setup'@'localhost';
+   GRANT SELECT, DELETE ON mama_auto_parts_db.auth_sessions TO 'mama_setup'@'localhost';
+   GRANT SELECT, INSERT ON mama_auto_parts_db.inventory_items TO 'mama_setup'@'localhost';
+   ```
+
+5. Enable local demo accounts and credentials in `.env`:
+
+   ```env
+   DEMO_ACCOUNTS_ENABLED=true
+   VITE_SHOW_DEMO_CREDENTIALS=true
+   ```
+
+   `npm run api` applies the idempotent migrations and seeds the separate demo admin/customer accounts using bcrypt. The login page displays their credentials only when `VITE_SHOW_DEMO_CREDENTIALS=true`. In that local demo mode, 50 illustrative sample products per category are seeded into MariaDB with local SVG illustrations and are marked as samples. Sample prices and stock are not real. Keep both settings false in production; demo accounts and sample inventory are disabled there. Existing real user accounts and inventory rows are not overwritten by the demo seed.
+
+6. Existing administrator/customer passwords may not be bcrypt-compatible with the secure API. To reset a real administrator password, run:
+
+   ```powershell
+   npm run reset-admin
+   ```
+
+   The command asks for the existing admin email and reads a new password without echoing it. Use a unique password with at least 12 characters. If the database has no admin account, create one with `npm run create-admin`. Public registration is disabled.
+
+7. Start the full local app in one terminal:
+
+   ```powershell
    npm run dev
    ```
-   Open your browser and navigate to `http://localhost:5173`.
 
-4. **Build for production:**
-   ```bash
-   npm run build
+   This runs migrations and demo seeding, waits for the API/database health check, then starts Vite and opens the browser. If the Vite port is already in use, Vite selects the next available port. Use `npm run dev:frontend` only when you intentionally want to run the frontend without the API.
+
+## XAMPP Apache deployment
+
+1. Set production `.env` values on the server: `NODE_ENV=production`, `COOKIE_SECURE=true`, `DEMO_ACCOUNTS_ENABLED=false`, and `FRONTEND_ORIGINS=https://your-real-hostname`. Also build with `VITE_SHOW_DEMO_CREDENTIALS=false`, strong DB credentials, and a newly generated `SESSION_SECRET`. Use HTTPS; the API refuses production startup if secure cookies are disabled. Keep the API bound to `127.0.0.1` and do not expose port 3001 publicly.
+2. Enable Apache `mod_proxy` and `mod_proxy_http`, then add the following to the active Apache virtual-host/server configuration (not the app's `.htaccess`):
+
+   ```apache
+   ProxyPass        /mama-auto-parts/api/ http://127.0.0.1:3001/api/
+   ProxyPassReverse /mama-auto-parts/api/ http://127.0.0.1:3001/api/
    ```
 
-5. **Preview production build:**
-   ```bash
-   npm run preview
+   Keep the app's `public/.htaccess` rewrite rules and security headers. `FRONTEND_ORIGINS` must contain the browser-visible origin(s), without paths. If Apache is a trusted reverse proxy, set `TRUST_PROXY=true`; keep the API loopback-only.
+3. Build the React app for the existing subdirectory and deploy the generated files:
+
+   ```powershell
+   npm run build -- --base=/mama-auto-parts/
    ```
 
----
+   Copy the **contents** of `dist` into `C:\xampp\htdocs\mama-auto-parts`. The API must also run continuously as a Windows service or supervised process; `npm run api` is suitable for local testing, not service supervision.
+4. Run `npm run db:migrate` and `npm run create-admin` with production DB settings before exposing the login page. Restrict database access to the application host and back up the MariaDB server separately.
 
-## 🔑 Demo Access & User Roles
+## API
 
-The system includes convenient **1-Click Demo Login** buttons on the login screen (`/login`):
+All API responses are JSON. API errors use explicit status codes and generic public error messages.
 
-* **Admin / Staff Role**:
-  * Email: `admin@mamaautoparts.com.np`
-  * Password: `admin123` (or click **Demo Admin**)
-  * *Access:* Complete access to POS Billing, Inventory CRUD, Financial Reports, Customer & Supplier directories, and System Settings.
-* **Customer Portal Role**:
-  * Select any customer (e.g. `Bikram Thapa - Bajaj Pulsar 220F`) or click **Demo Customer**.
-  * *Access:* Browse parts catalog for compatible motorcycle spares, review past tax invoices, and verify outstanding due balances.
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/health` | API and database health |
+| `GET` | `/api/demo-accounts` | Return demo credentials only when local demo mode is enabled |
+| `POST` | `/api/auth/login` | Validate email/password/role and issue an HttpOnly session cookie |
+| `GET` | `/api/auth/me` | Resolve the active administrator or customer from the database-backed session |
+| `POST` | `/api/auth/logout` | Revoke the current server-side session |
+| `GET` | `/api/customer/invoices` | Return only invoices linked to the authenticated customer |
+| `GET` | `/api/operations` | Load administrator products, customers, suppliers, invoices, and settings |
+| `POST`, `PUT`, `DELETE` | `/api/products` | Create, update, and soft-delete products |
+| `POST`, `PUT`, `DELETE` | `/api/customers` | Create, update, and soft-delete customers |
+| `POST` | `/api/customers/:id/payments` | Record a customer payment and reduce the balance |
+| `POST`, `PUT`, `DELETE` | `/api/suppliers` | Create, update, and soft-delete suppliers |
+| `POST` | `/api/suppliers/:id/payments` | Record a supplier payment and reduce the payable balance |
+| `POST` | `/api/sales` | Create an invoice, snapshot its items, and deduct stock transactionally |
+| `PUT` | `/api/settings` | Validate and persist store settings |
 
----
+Login is rate-limited (10 attempts per IP per 15 minutes), validates the selected role, compares bcrypt hashes from `users.password`, and returns a generic invalid-credentials message. Session identifiers are random, HttpOnly, SameSite=Strict cookies; only an HMAC digest is stored in `auth_sessions`, with an eight-hour expiry. State-changing auth requests require the configured exact `Origin`. Customer invoice queries are scoped to the current session's user ID. The API binds to loopback by default. Apache serves a restrictive CSP; Tailwind is compiled into the Vite bundle instead of loaded as executable CDN code.
 
-## 🏍️ Sample Preloaded Motorcycle Data
+## Checks
 
-The database comes pre-populated with realistic parts and specs commonly used across Nepal:
-* **Brakes**: Endurance Ceramic Disc Pads (Pulsar 220), Brembo Sintered Pads (KTM Duke), Nissin Drum Shoes (Honda Shine).
-* **Engine Oils**: Motul 7100 10W50 100% Synthetic, Motul 3000 20W50, Castrol Power1 Ultimate 10W40, Bajaj DTS-i 1.15L.
-* **Drive & Chains**: Rolon Brass Chain Sprocket Kit, DID Japan Golden O-Ring Chain (124L), TVS Genuine Chain Set.
-* **Electrical & Batteries**: Exide Xplore 12V 9Ah Maintenance-Free, Amaron Pro Rider 5Ah, NGK Laser Iridium Spark Plugs.
-* **Tyres**: MRF Zapper S 140/70-17 Rear, CEAT Zoom Plus 100/80-17 Front.
+```powershell
+npm test
+npm run lint
+npm run build
+```
 
----
+CSV exports use a shared encoder that quotes cells and neutralizes formula-leading text.
 
-## 📄 License
-This project is developed for educational and commercial motorcycle inventory management purposes. All rights reserved.
+## Remaining work before real business use
+
+Add purchase-order/receiving workflows, secure account recovery, audit logging, database backup/restore procedures, and supervised HTTPS service deployment. Review historical invoice ownership before any customer linking; the app deliberately does not infer it from names or phone numbers. No payment-provider integration is implemented.

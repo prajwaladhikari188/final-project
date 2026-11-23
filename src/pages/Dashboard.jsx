@@ -80,16 +80,20 @@ const Dashboard = () => {
     0
   );
 
-  // 2. Chart Data: 7-Day Sales Trend (Simulated or from transactions)
-  const salesChartData = [
-    { day: "Sun", sales: 12400, profit: 3720 },
-    { day: "Mon", sales: 18900, profit: 5400 },
-    { day: "Tue", sales: 15600, profit: 4680 },
-    { day: "Wed", sales: 22100, profit: 6630 },
-    { day: "Thu", sales: 19800, profit: 5940 },
-    { day: "Fri", sales: 27500, profit: 8250 },
-    { day: "Sat (Today)", sales: todaySales > 0 ? todaySales : 18450, profit: 5500 }
-  ];
+  const salesByDate = transactions.reduce((totals, transaction) => {
+    const date = transaction.date?.split(" ")[0];
+    if (date) totals[date] = (totals[date] || 0) + (transaction.grandTotal || 0);
+    return totals;
+  }, {});
+  const salesChartData = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - index));
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return {
+      day: date.toLocaleDateString(undefined, { weekday: "short" }),
+      sales: salesByDate[key] || 0
+    };
+  });
 
   // 3. Category Pie Chart Data
   const categoryCounts = products.reduce((acc, p) => {
@@ -170,8 +174,6 @@ const Dashboard = () => {
           subtext={`${todayTransactions.length} bills generated today`}
           icon={TrendingUp}
           color="emerald"
-          trend="+14.2%"
-          trendPositive={true}
           onClick={() => navigate("/reports")}
         />
 
@@ -243,20 +245,17 @@ const Dashboard = () => {
 
       {/* Visual Analytics Row: 7-Day Trend & Stock by Category */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: 7-Day Sales & Profit Area Chart (7 cols) */}
+        {/* Left: 7-Day Sales Area Chart (7 cols) */}
         <div className="lg:col-span-7 bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-bold text-slate-900 font-display">
-                Weekly Revenue & Profit Dynamics
+                Weekly Revenue
               </h2>
               <p className="text-xs text-slate-500">
-                Daily POS revenue in {settings.currency} compared to estimated gross margin
+                POS revenue recorded during the last seven days
               </p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Avg Margin ~30%
-            </span>
           </div>
 
           <div className="h-64 sm:h-72 w-full">
@@ -266,10 +265,6 @@ const Dashboard = () => {
                   <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="profitGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#059669" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
@@ -293,15 +288,6 @@ const Dashboard = () => {
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#salesGrad)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="profit"
-                  name="Gross Margin"
-                  stroke="#059669"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#profitGrad)"
                 />
               </AreaChart>
             </ResponsiveContainer>

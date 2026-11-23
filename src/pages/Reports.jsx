@@ -30,6 +30,7 @@ import {
 import { useApp } from "../context/AppContext";
 import DataTable from "../components/DataTable";
 import InvoiceModal from "../components/InvoiceModal";
+import { downloadCsv } from "../utils/csv";
 
 const Reports = () => {
   const { transactions, products, settings } = useApp();
@@ -93,7 +94,7 @@ const Reports = () => {
   const estimatedCOGS = useMemo(() => {
     return filteredTransactions.reduce((acc, t) => {
       const txCost = t.items.reduce((itemAcc, item) => {
-        const costPrice = productPriceMap[item.id] || item.price * 0.65;
+        const costPrice = productPriceMap[item.id] || 0;
         return itemAcc + costPrice * item.quantity;
       }, 0);
       return acc + txCost;
@@ -108,17 +109,28 @@ const Reports = () => {
       ? Math.round(totalRevenue / filteredTransactions.length)
       : 0;
 
-  // Chart 1: Revenue vs Profit breakdown by day/period
+  // Chart 1: Recorded revenue and estimated cost for the last seven days
   const barChartData = useMemo(() => {
-    return [
-      { name: "Mon", revenue: 18900, cogs: 13500, profit: 5400 },
-      { name: "Tue", revenue: 15600, cogs: 10920, profit: 4680 },
-      { name: "Wed", revenue: 22100, cogs: 15470, profit: 6630 },
-      { name: "Thu", revenue: 19800, cogs: 13860, profit: 5940 },
-      { name: "Fri", revenue: 27500, cogs: 19250, profit: 8250 },
-      { name: "Sat (Peak)", revenue: totalRevenue > 25000 ? totalRevenue : 32400, cogs: 22680, profit: 9720 }
-    ];
-  }, [totalRevenue]);
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - index));
+      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      const dayTransactions = filteredTransactions.filter((transaction) => transaction.date?.startsWith(dateKey));
+      const revenue = dayTransactions.reduce((sum, transaction) => sum + (transaction.grandTotal || 0), 0);
+      const cogs = dayTransactions.reduce((sum, transaction) => {
+        return sum + transaction.items.reduce(
+          (itemSum, item) => itemSum + (productPriceMap[item.id] || 0) * item.quantity,
+          0
+        );
+      }, 0);
+      return {
+        name: date.toLocaleDateString(undefined, { weekday: "short" }),
+        revenue,
+        cogs,
+        profit: Math.max(0, revenue - cogs)
+      };
+    });
+  }, [filteredTransactions, productPriceMap]);
 
   // Chart 2: Sales by Payment Method
   const paymentMethodData = useMemo(() => {
@@ -170,28 +182,19 @@ const Reports = () => {
     ];
 
     const rows = filteredTransactions.map((t) => [
-      `"${t.id}"`,
-      `"${t.date}"`,
-      `"${t.customerName.replace(/"/g, '""')}"`,
-      `"${t.customerVehicle || ""}"`,
-      `"${t.paymentMethod}"`,
+      t.id,
+      t.date,
+      t.customerName || "",
+      t.customerVehicle || "",
+      t.paymentMethod || "",
       t.subtotal,
       t.discount,
       t.vatAmount,
       t.grandTotal,
-      `"${t.paymentStatus || "Paid"}"`
+      t.paymentStatus || "Paid"
     ]);
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `mama_auto_parts_sales_report_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(`mama_auto_parts_sales_report_${Date.now()}.csv`, headers, rows);
   };
 
   // Columns for Transaction History Table

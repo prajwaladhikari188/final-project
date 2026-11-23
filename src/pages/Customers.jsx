@@ -40,6 +40,7 @@ const Customers = () => {
   // Payment recording modal
   const [payingCustomer, setPayingCustomer] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Fonepay QR");
 
   // Customer Invoices history drawer
   const [historyCustomer, setHistoryCustomer] = useState(null);
@@ -74,10 +75,11 @@ const Customers = () => {
   const totalLifetimeSpent = customers.reduce((acc, c) => acc + (c.totalSpent || 0), 0);
 
   // Handle Record Payment Submit
-  const handlePaymentSubmit = (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     if (!payingCustomer || !paymentAmount) return;
-    recordCustomerPayment(payingCustomer.id, paymentAmount);
+    const saved = await recordCustomerPayment(payingCustomer.id, paymentAmount, paymentMethod);
+    if (!saved) return;
     setPayingCustomer(null);
     setPaymentAmount("");
   };
@@ -447,7 +449,11 @@ const Customers = () => {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Payment Mode
                 </label>
-                <select className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none">
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                >
                   <option>Fonepay QR</option>
                   <option>Cash at Counter</option>
                   <option>eSewa / Khalti</option>
@@ -487,12 +493,11 @@ const Customers = () => {
       <CustomerModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={(data) => {
+        onSave={async (data) => {
           if (customerToEdit) {
-            updateCustomer(customerToEdit.id, data);
-          } else {
-            addCustomer(data);
+            return updateCustomer(customerToEdit.id, data);
           }
+          return addCustomer(data);
         }}
         customerToEdit={customerToEdit}
       />
